@@ -60,37 +60,37 @@ export function TrackMarker({
     }
   }, [onToggleComplete]);
 
-  // Determine marker color based on state
-  const getMarkerColors = () => {
+  // Determine marker color based on state (Neo Brutalist style)
+  const getMarkerStyle = () => {
     if (!selectedTrack) {
       return {
-        bg: 'bg-gray-500/50 hover:bg-gray-400/70',
-        shadow: '',
-        textColor: 'text-white',
+        bg: 'bg-white/70 hover:bg-white/90',
+        textColor: 'text-black',
+        shadow: '2px 2px 0px 0px rgba(0,0,0,0.5)',
       };
     }
     if (isCompleted) {
       return {
         bg: 'bg-red-500',
-        shadow: 'shadow-lg shadow-red-500/50',
         textColor: 'text-white',
+        shadow: '3px 3px 0px 0px #000',
       };
     }
     if (isNext) {
       return {
-        bg: 'bg-green-500',
-        shadow: 'shadow-lg shadow-green-500/50',
-        textColor: 'text-white',
+        bg: 'bg-green-400',
+        textColor: 'text-black',
+        shadow: '3px 3px 0px 0px #000',
       };
     }
     return {
       bg: 'bg-yellow-400',
-      shadow: 'shadow-lg shadow-yellow-400/50',
       textColor: 'text-black',
+      shadow: '3px 3px 0px 0px #000',
     };
   };
 
-  const colors = getMarkerColors();
+  const markerStyle = getMarkerStyle();
 
   return (
     <div
@@ -106,44 +106,45 @@ export function TrackMarker({
       onClick={handleTap}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Marker with dynamic sizing and state-based colors */}
+      {/* Marker with dynamic sizing and Neo Brutalist style */}
       <div
         className={`
-          flex items-center justify-center rounded-full font-bold transition-all duration-200
-          ${colors.bg} ${colors.textColor} ${colors.shadow}
+          flex items-center justify-center font-black transition-all duration-200
+          ${markerStyle.bg} ${markerStyle.textColor}
           ${isSelected ? `marker-pop-in ${isHighlighted ? 'marker-pulse' : ''}` : ''}
-          ${isCompleted ? 'opacity-70' : ''}
+          ${isCompleted ? 'opacity-60' : ''}
         `}
         style={{
           width: `${isSelected ? selectedSize : unselectedSize}px`,
           height: `${isSelected ? selectedSize : unselectedSize}px`,
           fontSize: `${isSelected ? fontSize : 10}px`,
           animationDelay: isSelected ? `${animationDelay}ms` : '0ms',
-          border: isSelected ? `${borderWidth}px solid #fff` : '2px solid rgba(255,255,255,0.3)',
+          border: isSelected ? `${borderWidth}px solid #000` : '2px solid #000',
+          boxShadow: markerStyle.shadow,
         }}
       >
         {isSelected && (isCompleted ? '✓' : selectedTrack?.order)}
       </div>
 
-      {/* Tooltip */}
+      {/* Tooltip - Neo Brutalist style */}
       {showTooltip && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg whitespace-nowrap z-50 pointer-events-none"
-          style={{ minWidth: '150px', textAlign: 'center' }}
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-white text-black text-sm whitespace-nowrap z-50 pointer-events-none border-3 border-black"
+          style={{ minWidth: '150px', textAlign: 'center', boxShadow: '4px 4px 0px 0px #000' }}
         >
-          <div className="font-semibold">{track.name}</div>
+          <div className="font-black uppercase">{track.name}</div>
           <div className="flex items-center justify-center gap-2 mt-1">
             {track.isNew ? (
-              <span className="px-2 py-0.5 text-xs rounded bg-green-500 text-white">NEW</span>
+              <span className="px-2 py-0.5 text-xs font-bold uppercase bg-green-400 text-black border border-black">NEW</span>
             ) : (
-              <span className="px-2 py-0.5 text-xs rounded bg-blue-500 text-white">{track.origin}</span>
+              <span className="px-2 py-0.5 text-xs font-bold bg-blue-400 text-black border border-black">{track.origin}</span>
             )}
           </div>
           {isSelected && (
-            <div className="mt-1 text-yellow-400 text-xs">Race #{selectedTrack?.order}</div>
+            <div className="mt-1 text-xs font-bold">
+              {isCompleted ? '✓ Completed' : isNext ? '→ UP NEXT' : `Race #${selectedTrack?.order}`}
+            </div>
           )}
-          {/* Tooltip arrow */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
         </div>
       )}
     </div>

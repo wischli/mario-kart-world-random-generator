@@ -4,6 +4,16 @@ import { selectRandomTracks, encodeSelection, decodeSelection, formatTrackListFo
 import { WorldMap } from './components/WorldMap';
 import { TrackList } from './components/TrackList';
 import { GenerateButton } from './components/GenerateButton';
+import { ConfirmModal } from './components/ConfirmModal';
+
+const STORAGE_KEYS = {
+  TRACKS: 'mkw-selected-tracks',
+  COMPLETED: 'mkw-completed-orders',
+  MARKER_SIZE: 'mkw-marker-size',
+  THEME: 'mkw-theme',
+};
+
+type Theme = 'light' | 'dark' | 'system';
 
 const STORAGE_KEYS = {
   TRACKS: 'mkw-selected-tracks',
@@ -18,6 +28,11 @@ function App() {
   const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
   const [completedOrders, setCompletedOrders] = useState<Set<number>>(new Set()); // track completion by order number
   const [isLoaded, setIsLoaded] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    action: 'generate' | 'reset' | null;
+  }>({ isOpen: false, action: null });
+  const [theme, setTheme] = useState<Theme>('system');
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
@@ -29,6 +44,12 @@ function App() {
 
     // Determine if this is a shared link (URL differs from localStorage)
     const isSharedLink = urlEncoded && urlEncoded !== savedTracks;
+
+    // Load theme preference
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme | null;
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+      setTheme(savedTheme);
+    }
 
     try {
       // Load marker size from localStorage (always)
@@ -97,32 +118,59 @@ function App() {
     localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize));
   }, [markerSize, isLoaded]);
 
+  // Save theme to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  }, [theme, isLoaded]);
+
+  // Cycle through themes: system -> light -> dark -> system
+  const handleToggleTheme = useCallback(() => {
+    setTheme(prev => {
+      if (prev === 'system') return 'light';
+      if (prev === 'light') return 'dark';
+      return 'system';
+    });
+  }, []);
+
   const handleGenerate = useCallback(() => {
     // Show confirmation if there's progress
     if (completedOrders.size > 0) {
-      const confirmed = window.confirm(
-        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to generate a new selection? Your progress will be lost.`
-      );
-      if (!confirmed) return;
+      setConfirmModal({ isOpen: true, action: 'generate' });
+      return;
     }
 
     const selected = selectRandomTracks(TRACKS, 16);
     setSelectedTracks(selected);
     setCompletedOrders(new Set());
-  }, [completedOrders.size, selectedTracks.length]);
+  }, [completedOrders.size]);
 
   const handleReset = useCallback(() => {
     // Show confirmation if there's progress
     if (completedOrders.size > 0) {
-      const confirmed = window.confirm(
-        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to reset? Your progress will be lost.`
-      );
-      if (!confirmed) return;
+      setConfirmModal({ isOpen: true, action: 'reset' });
+      return;
     }
 
     setSelectedTracks([]);
     setCompletedOrders(new Set());
-  }, [completedOrders.size, selectedTracks.length]);
+  }, [completedOrders.size]);
+
+  const handleConfirmAction = useCallback(() => {
+    if (confirmModal.action === 'generate') {
+      const selected = selectRandomTracks(TRACKS, 16);
+      setSelectedTracks(selected);
+      setCompletedOrders(new Set());
+    } else if (confirmModal.action === 'reset') {
+      setSelectedTracks([]);
+      setCompletedOrders(new Set());
+    }
+    setConfirmModal({ isOpen: false, action: null });
+  }, [confirmModal.action]);
+
+  const handleCancelAction = useCallback(() => {
+    setConfirmModal({ isOpen: false, action: null });
+  }, []);
 
   // Toggle track completion status
   const handleToggleComplete = useCallback((order: number) => {
@@ -155,8 +203,10 @@ function App() {
     }
   }, [selectedTracks]);
 
+  const themeClass = theme === 'system' ? 'theme-system' : theme === 'dark' ? 'theme-dark' : '';
+
   return (
-    <div className="min-h-screen min-h-dvh p-4 md:p-6">
+    <div className={`min-h-screen min-h-dvh p-4 md:p-6 ${themeClass}`}>
       {/* Header - sticky on mobile for easy access to Generate button */}
       <header className="max-w-7xl mx-auto mb-4 md:mb-6 mobile-sticky-header">
         <div className="flex flex-row items-center justify-between gap-3">
@@ -215,6 +265,8 @@ function App() {
                 completedOrders={completedOrders}
                 nextTrackOrder={nextTrackOrder}
                 onToggleComplete={handleToggleComplete}
+                theme={theme}
+                onToggleTheme={handleToggleTheme}
               />
             </div>
           </div>
@@ -242,6 +294,18 @@ function App() {
           )}
         </p>
       </footer>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.action === 'generate' ? 'New Race?' : 'Reset All?'}
+        message={`You've completed ${completedOrders.size} of ${selectedTracks.length} tracks!\n\nYour progress will be lost.`}
+        confirmText={confirmModal.action === 'generate' ? 'Re-roll!' : 'Reset!'}
+        cancelText="Keep Racing"
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+        variant="warning"
+      />
     </div>
   );
 }
