@@ -6,10 +6,13 @@ interface GenerateButtonProps {
 
 export function GenerateButton({ onGenerate, onReset, hasSelection }: GenerateButtonProps) {
   return (
-    <div className="flex gap-2 flex-shrink-0">
+    <div className="flex gap-3 flex-shrink-0">
       <button
         onClick={onGenerate}
-        className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-black font-bold rounded-xl shadow-lg shadow-yellow-400/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
+        className="px-4 sm:px-5 py-2 sm:py-2.5 bg-yellow-400 hover:bg-yellow-300 text-black font-black uppercase text-sm sm:text-base border-3 border-black transition-transform active:translate-x-1 active:translate-y-1 flex items-center gap-2"
+        style={{
+          boxShadow: '4px 4px 0px 0px #000',
+        }}
       >
         <span className="text-lg sm:text-xl">🎲</span>
         <span>{hasSelection ? 'Re-roll' : 'Generate'}</span>
@@ -18,7 +21,10 @@ export function GenerateButton({ onGenerate, onReset, hasSelection }: GenerateBu
       {hasSelection && (
         <button
           onClick={onReset}
-          className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all hover:scale-105 active:scale-95 text-sm sm:text-base"
+          className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white hover:bg-gray-100 text-black font-black uppercase text-sm sm:text-base border-3 border-black transition-transform active:translate-x-1 active:translate-y-1"
+          style={{
+            boxShadow: '4px 4px 0px 0px #000',
+          }}
         >
           Reset
         </button>

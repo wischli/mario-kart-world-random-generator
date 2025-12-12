@@ -4,6 +4,7 @@ import { selectRandomTracks, encodeSelection, decodeSelection, formatTrackListFo
 import { WorldMap } from './components/WorldMap';
 import { TrackList } from './components/TrackList';
 import { GenerateButton } from './components/GenerateButton';
+import { ConfirmModal } from './components/ConfirmModal';
 
 const STORAGE_KEYS = {
   TRACKS: 'mkw-selected-tracks',
@@ -18,6 +19,10 @@ function App() {
   const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
   const [completedOrders, setCompletedOrders] = useState<Set<number>>(new Set()); // track completion by order number
   const [isLoaded, setIsLoaded] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    action: 'generate' | 'reset' | null;
+  }>({ isOpen: false, action: null });
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
@@ -100,29 +105,41 @@ function App() {
   const handleGenerate = useCallback(() => {
     // Show confirmation if there's progress
     if (completedOrders.size > 0) {
-      const confirmed = window.confirm(
-        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to generate a new selection? Your progress will be lost.`
-      );
-      if (!confirmed) return;
+      setConfirmModal({ isOpen: true, action: 'generate' });
+      return;
     }
 
     const selected = selectRandomTracks(TRACKS, 16);
     setSelectedTracks(selected);
     setCompletedOrders(new Set());
-  }, [completedOrders.size, selectedTracks.length]);
+  }, [completedOrders.size]);
 
   const handleReset = useCallback(() => {
     // Show confirmation if there's progress
     if (completedOrders.size > 0) {
-      const confirmed = window.confirm(
-        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to reset? Your progress will be lost.`
-      );
-      if (!confirmed) return;
+      setConfirmModal({ isOpen: true, action: 'reset' });
+      return;
     }
 
     setSelectedTracks([]);
     setCompletedOrders(new Set());
-  }, [completedOrders.size, selectedTracks.length]);
+  }, [completedOrders.size]);
+
+  const handleConfirmAction = useCallback(() => {
+    if (confirmModal.action === 'generate') {
+      const selected = selectRandomTracks(TRACKS, 16);
+      setSelectedTracks(selected);
+      setCompletedOrders(new Set());
+    } else if (confirmModal.action === 'reset') {
+      setSelectedTracks([]);
+      setCompletedOrders(new Set());
+    }
+    setConfirmModal({ isOpen: false, action: null });
+  }, [confirmModal.action]);
+
+  const handleCancelAction = useCallback(() => {
+    setConfirmModal({ isOpen: false, action: null });
+  }, []);
 
   // Toggle track completion status
   const handleToggleComplete = useCallback((order: number) => {
@@ -242,6 +259,18 @@ function App() {
           )}
         </p>
       </footer>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.action === 'generate' ? 'New Race?' : 'Reset All?'}
+        message={`You've completed ${completedOrders.size} of ${selectedTracks.length} tracks!\n\nYour progress will be lost.`}
+        confirmText={confirmModal.action === 'generate' ? 'Re-roll!' : 'Reset!'}
+        cancelText="Keep Racing"
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelAction}
+        variant="warning"
+      />
     </div>
   );
 }
