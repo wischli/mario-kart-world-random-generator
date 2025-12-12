@@ -5,45 +5,122 @@ import { WorldMap } from './components/WorldMap';
 import { TrackList } from './components/TrackList';
 import { GenerateButton } from './components/GenerateButton';
 
+const STORAGE_KEYS = {
+  TRACKS: 'mkw-selected-tracks',
+  COMPLETED: 'mkw-completed-orders',
+  MARKER_SIZE: 'mkw-marker-size',
+};
+
 function App() {
   const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([]);
   const [highlightedTrackId, setHighlightedTrackId] = useState<number | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
   const [completedOrders, setCompletedOrders] = useState<Set<number>>(new Set()); // track completion by order number
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load selection from URL on mount
+  // Load state from localStorage or URL on mount
   useEffect(() => {
+    // Check URL first (for shared links)
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('s');
+
     if (encoded) {
+      // URL takes priority - this is a shared link
       const decoded = decodeSelection(encoded, TRACKS);
       if (decoded) {
         setSelectedTracks(decoded);
+        setCompletedOrders(new Set()); // Fresh start for shared links
+      }
+    } else {
+      // Load from localStorage
+      try {
+        const savedTracks = localStorage.getItem(STORAGE_KEYS.TRACKS);
+        const savedCompleted = localStorage.getItem(STORAGE_KEYS.COMPLETED);
+        const savedSize = localStorage.getItem(STORAGE_KEYS.MARKER_SIZE);
+
+        if (savedTracks) {
+          const decoded = decodeSelection(savedTracks, TRACKS);
+          if (decoded) {
+            setSelectedTracks(decoded);
+          }
+        }
+
+        if (savedCompleted) {
+          const completedArray = JSON.parse(savedCompleted) as number[];
+          setCompletedOrders(new Set(completedArray));
+        }
+
+        if (savedSize) {
+          setMarkerSize(Number(savedSize));
+        }
+      } catch (err) {
+        console.error('Failed to load from localStorage:', err);
       }
     }
+
+    setIsLoaded(true);
   }, []);
 
-  // Update URL when selection changes
+  // Save selectedTracks to localStorage when it changes
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (selectedTracks.length > 0) {
       const encoded = encodeSelection(selectedTracks);
+      localStorage.setItem(STORAGE_KEYS.TRACKS, encoded);
+      // Also update URL for sharing
       const newUrl = `${window.location.pathname}?s=${encoded}`;
       window.history.replaceState(null, '', newUrl);
     } else {
+      localStorage.removeItem(STORAGE_KEYS.TRACKS);
       window.history.replaceState(null, '', window.location.pathname);
     }
-  }, [selectedTracks]);
+  }, [selectedTracks, isLoaded]);
+
+  // Save completedOrders to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (completedOrders.size > 0) {
+      localStorage.setItem(STORAGE_KEYS.COMPLETED, JSON.stringify([...completedOrders]));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.COMPLETED);
+    }
+  }, [completedOrders, isLoaded]);
+
+  // Save markerSize to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize));
+  }, [markerSize, isLoaded]);
 
   const handleGenerate = useCallback(() => {
+    // Show confirmation if there's progress
+    if (completedOrders.size > 0) {
+      const confirmed = window.confirm(
+        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to generate a new selection? Your progress will be lost.`
+      );
+      if (!confirmed) return;
+    }
+
     const selected = selectRandomTracks(TRACKS, 16);
     setSelectedTracks(selected);
-  }, []);
+    setCompletedOrders(new Set());
+  }, [completedOrders.size, selectedTracks.length]);
 
   const handleReset = useCallback(() => {
+    // Show confirmation if there's progress
+    if (completedOrders.size > 0) {
+      const confirmed = window.confirm(
+        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to reset? Your progress will be lost.`
+      );
+      if (!confirmed) return;
+    }
+
     setSelectedTracks([]);
     setCompletedOrders(new Set());
-  }, []);
+  }, [completedOrders.size, selectedTracks.length]);
 
   // Toggle track completion status
   const handleToggleComplete = useCallback((order: number) => {
