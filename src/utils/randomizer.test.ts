@@ -87,10 +87,35 @@ describe('encodeSelection / decodeSelection', () => {
     expect(decoded).toBeNull();
   });
 
-  it('returns null for wrong track count', () => {
-    // Encode only 8 tracks worth of IDs
-    const shortEncoded = btoa('1,2,3,4,5,6,7,8');
-    const decoded = decodeSelection(shortEncoded, mockTracks);
+  it('accepts variable track counts (1-30)', () => {
+    // 8 tracks should work
+    const encoded8 = btoa('1,2,3,4,5,6,7,8');
+    const decoded8 = decodeSelection(encoded8, mockTracks);
+    expect(decoded8).toHaveLength(8);
+
+    // 4 tracks should work
+    const encoded4 = btoa('1,2,3,4');
+    const decoded4 = decodeSelection(encoded4, mockTracks);
+    expect(decoded4).toHaveLength(4);
+
+    // 30 tracks (all) should work
+    const all30 = Array.from({ length: 30 }, (_, i) => i + 1).join(',');
+    const encoded30 = btoa(all30);
+    const decoded30 = decodeSelection(encoded30, mockTracks);
+    expect(decoded30).toHaveLength(30);
+  });
+
+  it('returns null for empty selection', () => {
+    const emptyEncoded = btoa('');
+    const decoded = decodeSelection(emptyEncoded, mockTracks);
+    expect(decoded).toBeNull();
+  });
+
+  it('returns null for too many tracks', () => {
+    // 31 tracks exceeds total available (30)
+    const tooMany = Array.from({ length: 31 }, (_, i) => (i % 30) + 1).join(',');
+    const encoded = btoa(tooMany);
+    const decoded = decodeSelection(encoded, mockTracks);
     expect(decoded).toBeNull();
   });
 

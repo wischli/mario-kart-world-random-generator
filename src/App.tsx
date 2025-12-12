@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   COMPLETED: 'mkw-completed-orders',
   MARKER_SIZE: 'mkw-marker-size',
   THEME: 'mkw-theme',
+  TRACK_COUNT: 'mkw-track-count',
 };
 
 type Theme = 'light' | 'dark' | 'system';
@@ -27,6 +28,7 @@ function App() {
     action: 'generate' | 'reset' | null;
   }>({ isOpen: false, action: null });
   const [theme, setTheme] = useState<Theme>('system');
+  const [trackCount, setTrackCount] = useState(16);
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
@@ -43,6 +45,15 @@ function App() {
     const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme | null;
     if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setTheme(savedTheme);
+    }
+
+    // Load track count preference
+    const savedTrackCount = localStorage.getItem(STORAGE_KEYS.TRACK_COUNT);
+    if (savedTrackCount) {
+      const count = Number(savedTrackCount);
+      if (count >= 1 && count <= 30) {
+        setTrackCount(count);
+      }
     }
 
     try {
@@ -118,6 +129,12 @@ function App() {
     localStorage.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme, isLoaded]);
 
+  // Save trackCount to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.TRACK_COUNT, String(trackCount));
+  }, [trackCount, isLoaded]);
+
   // Cycle through themes: system -> light -> dark -> system
   const handleToggleTheme = useCallback(() => {
     setTheme(prev => {
@@ -134,10 +151,10 @@ function App() {
       return;
     }
 
-    const selected = selectRandomTracks(TRACKS, 16);
+    const selected = selectRandomTracks(TRACKS, trackCount);
     setSelectedTracks(selected);
     setCompletedOrders(new Set());
-  }, [completedOrders.size]);
+  }, [completedOrders.size, trackCount]);
 
   const handleReset = useCallback(() => {
     // Show confirmation if there's progress
@@ -152,7 +169,7 @@ function App() {
 
   const handleConfirmAction = useCallback(() => {
     if (confirmModal.action === 'generate') {
-      const selected = selectRandomTracks(TRACKS, 16);
+      const selected = selectRandomTracks(TRACKS, trackCount);
       setSelectedTracks(selected);
       setCompletedOrders(new Set());
     } else if (confirmModal.action === 'reset') {
@@ -160,7 +177,7 @@ function App() {
       setCompletedOrders(new Set());
     }
     setConfirmModal({ isOpen: false, action: null });
-  }, [confirmModal.action]);
+  }, [confirmModal.action, trackCount]);
 
   const handleCancelAction = useCallback(() => {
     setConfirmModal({ isOpen: false, action: null });
@@ -217,6 +234,8 @@ function App() {
             onGenerate={handleGenerate}
             onReset={handleReset}
             hasSelection={selectedTracks.length > 0}
+            trackCount={trackCount}
+            onTrackCountChange={setTrackCount}
           />
         </div>
       </header>
@@ -280,7 +299,7 @@ function App() {
       {/* Footer - hidden on mobile to save space */}
       <footer className="max-w-7xl mx-auto mt-6 md:mt-8 text-center text-gray-500 text-xs sm:text-sm hidden sm:block">
         <p>
-          Select 16 random tracks for your VS race!
+          Select random tracks for your VS race!
           {selectedTracks.length > 0 && (
             <span className="ml-2">
               Share this selection by copying the URL.
