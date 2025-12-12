@@ -108,7 +108,7 @@ body {
   animation: fade-in 0.3s ease-out forwards;
 }
 
-/* Panel light/dark mode (follows OS preference) */
+/* Panel light/dark mode - Light theme (default) */
 .panel-bg {
   background-color: rgba(255, 255, 255, 0.95);
 }
@@ -141,38 +141,79 @@ body {
   background-color: #e5e7eb;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .panel-bg {
-    background-color: rgba(30, 30, 30, 0.95);
+/* Dark theme - applied via .theme-dark class or OS preference with .theme-system */
+.theme-dark .panel-bg,
+.theme-system .panel-bg {
+  background-color: rgba(30, 30, 30, 0.95);
+}
+
+.theme-dark .panel-text,
+.theme-system .panel-text {
+  color: #fff;
+}
+
+.theme-dark .panel-text-muted,
+.theme-system .panel-text-muted {
+  color: #999;
+}
+
+.theme-dark .track-item-default,
+.theme-system .track-item-default {
+  background-color: #2a2a2a;
+}
+
+.theme-dark .track-item-default:hover,
+.theme-system .track-item-default:hover {
+  background-color: #3a3a3a;
+}
+
+.theme-dark .track-item-next,
+.theme-system .track-item-next {
+  background-color: #166534;
+}
+
+.theme-dark .track-item-next:hover,
+.theme-system .track-item-next:hover {
+  background-color: #15803d;
+}
+
+.theme-dark .track-item-completed,
+.theme-system .track-item-completed {
+  background-color: #1f1f1f;
+}
+
+/* System preference - only apply dark when OS is dark */
+@media (prefers-color-scheme: light) {
+  .theme-system .panel-bg {
+    background-color: rgba(255, 255, 255, 0.95);
   }
 
-  .panel-text {
-    color: #fff;
+  .theme-system .panel-text {
+    color: #000;
   }
 
-  .panel-text-muted {
-    color: #999;
+  .theme-system .panel-text-muted {
+    color: #666;
   }
 
-  .track-item-default {
-    background-color: #2a2a2a;
+  .theme-system .track-item-default {
+    background-color: #f9fafb;
   }
 
-  .track-item-default:hover {
-    background-color: #3a3a3a;
+  .theme-system .track-item-default:hover {
+    background-color: #f3f4f6;
   }
 
-  .track-item-next {
-    background-color: #166534;
+  .theme-system .track-item-next {
+    background-color: #bbf7d0;
   }
 
-  .track-item-next:hover {
-    background-color: #15803d;
+  .theme-system .track-item-next:hover {
+    background-color: #dcfce7;
   }
 
-  .track-item-completed {
-    background-color: #1f1f1f;
+  .theme-system .track-item-completed {
+    background-color: #e5e7eb;
   }
 }
 

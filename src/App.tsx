@@ -10,7 +10,10 @@ const STORAGE_KEYS = {
   TRACKS: 'mkw-selected-tracks',
   COMPLETED: 'mkw-completed-orders',
   MARKER_SIZE: 'mkw-marker-size',
+  THEME: 'mkw-theme',
 };
+
+type Theme = 'light' | 'dark' | 'system';
 
 function App() {
   const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([]);
@@ -23,6 +26,7 @@ function App() {
     isOpen: boolean;
     action: 'generate' | 'reset' | null;
   }>({ isOpen: false, action: null });
+  const [theme, setTheme] = useState<Theme>('system');
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
@@ -34,6 +38,12 @@ function App() {
 
     // Determine if this is a shared link (URL differs from localStorage)
     const isSharedLink = urlEncoded && urlEncoded !== savedTracks;
+
+    // Load theme preference
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme | null;
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+      setTheme(savedTheme);
+    }
 
     try {
       // Load marker size from localStorage (always)
@@ -101,6 +111,21 @@ function App() {
     if (!isLoaded) return;
     localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize));
   }, [markerSize, isLoaded]);
+
+  // Save theme to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  }, [theme, isLoaded]);
+
+  // Cycle through themes: system -> light -> dark -> system
+  const handleToggleTheme = useCallback(() => {
+    setTheme(prev => {
+      if (prev === 'system') return 'light';
+      if (prev === 'light') return 'dark';
+      return 'system';
+    });
+  }, []);
 
   const handleGenerate = useCallback(() => {
     // Show confirmation if there's progress
@@ -172,8 +197,10 @@ function App() {
     }
   }, [selectedTracks]);
 
+  const themeClass = theme === 'system' ? 'theme-system' : theme === 'dark' ? 'theme-dark' : '';
+
   return (
-    <div className="min-h-screen min-h-dvh p-4 md:p-6">
+    <div className={`min-h-screen min-h-dvh p-4 md:p-6 ${themeClass}`}>
       {/* Header - sticky on mobile for easy access to Generate button */}
       <header className="max-w-7xl mx-auto mb-4 md:mb-6 mobile-sticky-header">
         <div className="flex flex-row items-center justify-between gap-3">
@@ -232,6 +259,8 @@ function App() {
                 completedOrders={completedOrders}
                 nextTrackOrder={nextTrackOrder}
                 onToggleComplete={handleToggleComplete}
+                theme={theme}
+                onToggleTheme={handleToggleTheme}
               />
             </div>
           </div>

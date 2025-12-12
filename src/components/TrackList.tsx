@@ -1,5 +1,7 @@
 import type { SelectedTrack } from '../data/tracks';
 
+type Theme = 'light' | 'dark' | 'system';
+
 interface TrackListProps {
   selectedTracks: SelectedTrack[];
   onTrackHover: (trackId: number | null) => void;
@@ -7,9 +9,23 @@ interface TrackListProps {
   completedOrders: Set<number>;
   nextTrackOrder: number | null;
   onToggleComplete: (order: number) => void;
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
-export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedOrders, nextTrackOrder, onToggleComplete }: TrackListProps) {
+const themeIcons: Record<Theme, string> = {
+  light: '☀️',
+  dark: '🌙',
+  system: '💻',
+};
+
+const themeLabels: Record<Theme, string> = {
+  light: 'Light',
+  dark: 'Dark',
+  system: 'Auto',
+};
+
+export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedOrders, nextTrackOrder, onToggleComplete, theme, onToggleTheme }: TrackListProps) {
   const sortedTracks = [...selectedTracks].sort((a, b) => a.order - b.order);
 
   return (
@@ -17,15 +33,27 @@ export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedO
       className="panel-bg p-3 sm:p-4 h-full flex flex-col border-3 border-black"
       style={{ boxShadow: '6px 6px 0px 0px #000' }}
     >
-      <h2 className="text-base sm:text-lg font-black uppercase panel-text mb-2 sm:mb-3 flex items-center gap-2 border-b-3 border-black pb-2">
-        <span className="text-xl sm:text-2xl">🏁</span>
-        Race Order
-        {selectedTracks.length > 0 && (
-          <span className="text-xs font-bold text-black ml-auto bg-yellow-400 px-2 py-0.5 border-2 border-black">
-            {completedOrders.size}/{selectedTracks.length}
-          </span>
-        )}
-      </h2>
+      <div className="flex items-center justify-between mb-2 sm:mb-3 border-b-3 border-black pb-2">
+        <h2 className="text-base sm:text-lg font-black uppercase panel-text flex items-center gap-2">
+          <span className="text-xl sm:text-2xl">🏁</span>
+          Race Order
+        </h2>
+        <div className="flex items-center gap-2">
+          {selectedTracks.length > 0 && (
+            <span className="text-xs font-bold text-black bg-yellow-400 px-2 py-0.5 border-2 border-black">
+              {completedOrders.size}/{selectedTracks.length}
+            </span>
+          )}
+          <button
+            onClick={onToggleTheme}
+            className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 border-2 border-black text-sm transition-transform active:translate-x-0.5 active:translate-y-0.5"
+            style={{ boxShadow: '2px 2px 0px 0px #000' }}
+            title={`Theme: ${themeLabels[theme]}`}
+          >
+            {themeIcons[theme]}
+          </button>
+        </div>
+      </div>
 
       {selectedTracks.length === 0 ? (
         <div className="flex-1 flex items-center justify-center panel-text-muted text-center px-4 py-8 sm:py-4">
