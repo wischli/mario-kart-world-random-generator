@@ -54,17 +54,17 @@ function App() {
   }, [selectedTracks]);
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      {/* Header */}
-      <header className="max-w-7xl mx-auto mb-4 md:mb-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl md:text-4xl">🎮</span>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white">
+    <div className="min-h-screen min-h-dvh p-4 md:p-6">
+      {/* Header - sticky on mobile for easy access to Generate button */}
+      <header className="max-w-7xl mx-auto mb-4 md:mb-6 mobile-sticky-header">
+        <div className="flex flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="text-2xl sm:text-3xl md:text-4xl flex-shrink-0">🎮</span>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
                 Mario Kart World
               </h1>
-              <p className="text-sm text-gray-400">Random Track Generator</p>
+              <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Random Track Generator</p>
             </div>
           </div>
           <GenerateButton
@@ -99,15 +99,18 @@ function App() {
         </div>
       </main>
 
-      {/* Copy feedback toast */}
+      {/* Copy feedback toast - positioned above safe area */}
       {copyFeedback && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg animate-pulse z-50">
+        <div
+          className="fixed left-1/2 -translate-x-1/2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg animate-pulse z-50"
+          style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom, 1.5rem))' }}
+        >
           Track list copied to clipboard!
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto mt-8 text-center text-gray-500 text-sm">
+      {/* Footer - hidden on mobile to save space */}
+      <footer className="max-w-7xl mx-auto mt-6 md:mt-8 text-center text-gray-500 text-xs sm:text-sm hidden sm:block">
         <p>
           Select 16 random tracks for your VS race!
           {selectedTracks.length > 0 && (

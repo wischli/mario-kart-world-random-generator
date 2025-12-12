@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Track, SelectedTrack } from '../data/tracks';
 import { MAP_REF_WIDTH, MAP_REF_HEIGHT } from '../data/tracks';
 
@@ -26,6 +26,12 @@ export function TrackMarker({
 
   const isSelected = !!selectedTrack;
 
+  // Handle tap on mobile - toggle tooltip
+  const handleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    setShowTooltip(prev => !prev);
+  }, []);
+
   return (
     <div
       className="absolute cursor-pointer"
@@ -33,18 +39,19 @@ export function TrackMarker({
         left: `${left}px`,
         top: `${top}px`,
         transform: 'translate(-50%, -50%)',
-        zIndex: isSelected ? 20 : 10,
+        zIndex: showTooltip ? 30 : (isSelected ? 20 : 10),
       }}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      onClick={handleTap}
     >
-      {/* Marker */}
+      {/* Marker with larger touch target on mobile */}
       <div
         className={`
           flex items-center justify-center rounded-full font-bold transition-all duration-200
           ${isSelected
-            ? `bg-yellow-400 text-black shadow-lg shadow-yellow-400/50 marker-pop-in ${isHighlighted ? 'marker-pulse' : ''}`
-            : 'bg-gray-500/50 hover:bg-gray-400/70'
+            ? `bg-yellow-400 text-black shadow-lg shadow-yellow-400/50 marker-pop-in marker-mobile-selected ${isHighlighted ? 'marker-pulse' : ''}`
+            : 'bg-gray-500/50 hover:bg-gray-400/70 marker-mobile-unselected'
           }
         `}
         style={{
