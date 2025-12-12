@@ -14,24 +14,24 @@ export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedO
 
   return (
     <div
-      className="bg-white/95 text-black p-3 sm:p-4 h-full flex flex-col border-3 border-black"
+      className="panel-bg p-3 sm:p-4 h-full flex flex-col border-3 border-black"
       style={{ boxShadow: '6px 6px 0px 0px #000' }}
     >
-      <h2 className="text-base sm:text-lg font-black uppercase text-black mb-2 sm:mb-3 flex items-center gap-2 border-b-3 border-black pb-2">
+      <h2 className="text-base sm:text-lg font-black uppercase panel-text mb-2 sm:mb-3 flex items-center gap-2 border-b-3 border-black pb-2">
         <span className="text-xl sm:text-2xl">🏁</span>
         Race Order
         {selectedTracks.length > 0 && (
-          <span className="text-xs font-bold text-gray-600 ml-auto bg-yellow-400 px-2 py-0.5 border-2 border-black">
+          <span className="text-xs font-bold text-black ml-auto bg-yellow-400 px-2 py-0.5 border-2 border-black">
             {completedOrders.size}/{selectedTracks.length}
           </span>
         )}
       </h2>
 
       {selectedTracks.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-gray-600 text-center px-4 py-8 sm:py-4">
+        <div className="flex-1 flex items-center justify-center panel-text-muted text-center px-4 py-8 sm:py-4">
           <div>
             <div className="text-3xl sm:text-4xl mb-2">🎲</div>
-            <p className="text-sm sm:text-base font-bold">Tap <span className="text-black">GENERATE</span> to randomly select 16 tracks!</p>
+            <p className="text-sm sm:text-base font-bold">Tap <span className="panel-text">GENERATE</span> to randomly select 16 tracks!</p>
           </div>
         </div>
       ) : (
@@ -53,8 +53,8 @@ export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedO
                 <div
                   key={track.id}
                   className={`flex items-center gap-2 sm:gap-3 p-2 cursor-pointer transition-all track-item-fade-in min-h-[44px] border-2 border-black
-                    ${isNext ? 'bg-green-200 hover:bg-green-100' : 'bg-gray-50 hover:bg-gray-100'}
-                    ${isCompleted ? 'opacity-50 bg-gray-200' : ''}
+                    ${isNext ? 'track-item-next' : 'track-item-default'}
+                    ${isCompleted ? 'opacity-50 track-item-completed' : ''}
                   `}
                   style={{
                     animationDelay: `${index * 30}ms`,
@@ -68,7 +68,7 @@ export function TrackList({ selectedTracks, onTrackHover, onCopyList, completedO
                     {isCompleted ? '✓' : track.order}
                   </div>
                   <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <div className={`font-bold truncate text-sm flex-1 ${isCompleted ? 'line-through text-gray-500' : 'text-black'}`}>
+                    <div className={`font-bold truncate text-sm flex-1 ${isCompleted ? 'line-through panel-text-muted' : 'panel-text'}`}>
                       {track.name}
                     </div>
                     {isNext && (
