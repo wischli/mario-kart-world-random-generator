@@ -21,24 +21,30 @@ function App() {
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
-    // Check URL first (for shared links)
     const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('s');
+    const urlEncoded = params.get('s');
+    const savedTracks = localStorage.getItem(STORAGE_KEYS.TRACKS);
+    const savedCompleted = localStorage.getItem(STORAGE_KEYS.COMPLETED);
+    const savedSize = localStorage.getItem(STORAGE_KEYS.MARKER_SIZE);
 
-    if (encoded) {
-      // URL takes priority - this is a shared link
-      const decoded = decodeSelection(encoded, TRACKS);
-      if (decoded) {
-        setSelectedTracks(decoded);
-        setCompletedOrders(new Set()); // Fresh start for shared links
+    // Determine if this is a shared link (URL differs from localStorage)
+    const isSharedLink = urlEncoded && urlEncoded !== savedTracks;
+
+    try {
+      // Load marker size from localStorage (always)
+      if (savedSize) {
+        setMarkerSize(Number(savedSize));
       }
-    } else {
-      // Load from localStorage
-      try {
-        const savedTracks = localStorage.getItem(STORAGE_KEYS.TRACKS);
-        const savedCompleted = localStorage.getItem(STORAGE_KEYS.COMPLETED);
-        const savedSize = localStorage.getItem(STORAGE_KEYS.MARKER_SIZE);
 
+      if (isSharedLink) {
+        // This is a shared link - use URL and start fresh
+        const decoded = decodeSelection(urlEncoded, TRACKS);
+        if (decoded) {
+          setSelectedTracks(decoded);
+          setCompletedOrders(new Set());
+        }
+      } else {
+        // Same session or no URL - restore from localStorage
         if (savedTracks) {
           const decoded = decodeSelection(savedTracks, TRACKS);
           if (decoded) {
@@ -50,13 +56,9 @@ function App() {
           const completedArray = JSON.parse(savedCompleted) as number[];
           setCompletedOrders(new Set(completedArray));
         }
-
-        if (savedSize) {
-          setMarkerSize(Number(savedSize));
-        }
-      } catch (err) {
-        console.error('Failed to load from localStorage:', err);
       }
+    } catch (err) {
+      console.error('Failed to load state:', err);
     }
 
     setIsLoaded(true);
