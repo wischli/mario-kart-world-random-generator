@@ -15,12 +15,6 @@ const STORAGE_KEYS = {
 
 type Theme = 'light' | 'dark' | 'system';
 
-const STORAGE_KEYS = {
-  TRACKS: 'mkw-selected-tracks',
-  COMPLETED: 'mkw-completed-orders',
-  MARKER_SIZE: 'mkw-marker-size',
-};
-
 function App() {
   const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([]);
   const [highlightedTrackId, setHighlightedTrackId] = useState<number | null>(null);
