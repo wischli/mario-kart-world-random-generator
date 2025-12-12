@@ -10,6 +10,9 @@ interface TrackMarkerProps {
   isHighlighted?: boolean;
   animationDelay?: number;
   sizeScale?: number;
+  isCompleted?: boolean;
+  isNext?: boolean;
+  onToggleComplete?: () => void;
 }
 
 // Base sizes at 100%
@@ -25,6 +28,9 @@ export function TrackMarker({
   isHighlighted,
   animationDelay = 0,
   sizeScale = 1,
+  isCompleted = false,
+  isNext = false,
+  onToggleComplete,
 }: TrackMarkerProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -39,11 +45,52 @@ export function TrackMarker({
   const fontSize = Math.round(BASE_SELECTED_FONT * sizeScale);
   const borderWidth = Math.max(2, Math.round(3 * sizeScale));
 
-  // Handle tap on mobile - toggle tooltip
+  // Handle tap on mobile - toggle tooltip (single tap) or complete (double tap)
   const handleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     setShowTooltip(prev => !prev);
   }, []);
+
+  // Handle double-click to toggle completion
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onToggleComplete) {
+      onToggleComplete();
+    }
+  }, [onToggleComplete]);
+
+  // Determine marker color based on state
+  const getMarkerColors = () => {
+    if (!selectedTrack) {
+      return {
+        bg: 'bg-gray-500/50 hover:bg-gray-400/70',
+        shadow: '',
+        textColor: 'text-white',
+      };
+    }
+    if (isCompleted) {
+      return {
+        bg: 'bg-red-500',
+        shadow: 'shadow-lg shadow-red-500/50',
+        textColor: 'text-white',
+      };
+    }
+    if (isNext) {
+      return {
+        bg: 'bg-green-500',
+        shadow: 'shadow-lg shadow-green-500/50',
+        textColor: 'text-white',
+      };
+    }
+    return {
+      bg: 'bg-yellow-400',
+      shadow: 'shadow-lg shadow-yellow-400/50',
+      textColor: 'text-black',
+    };
+  };
+
+  const colors = getMarkerColors();
 
   return (
     <div
@@ -57,15 +104,15 @@ export function TrackMarker({
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={handleTap}
+      onDoubleClick={handleDoubleClick}
     >
-      {/* Marker with dynamic sizing */}
+      {/* Marker with dynamic sizing and state-based colors */}
       <div
         className={`
           flex items-center justify-center rounded-full font-bold transition-all duration-200
-          ${isSelected
-            ? `bg-yellow-400 text-black shadow-lg shadow-yellow-400/50 marker-pop-in ${isHighlighted ? 'marker-pulse' : ''}`
-            : 'bg-gray-500/50 hover:bg-gray-400/70'
-          }
+          ${colors.bg} ${colors.textColor} ${colors.shadow}
+          ${isSelected ? `marker-pop-in ${isHighlighted ? 'marker-pulse' : ''}` : ''}
+          ${isCompleted ? 'opacity-70' : ''}
         `}
         style={{
           width: `${isSelected ? selectedSize : unselectedSize}px`,
@@ -75,7 +122,7 @@ export function TrackMarker({
           border: isSelected ? `${borderWidth}px solid #fff` : '2px solid rgba(255,255,255,0.3)',
         }}
       >
-        {isSelected && selectedTrack?.order}
+        {isSelected && (isCompleted ? '✓' : selectedTrack?.order)}
       </div>
 
       {/* Tooltip */}

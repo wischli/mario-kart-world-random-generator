@@ -5,43 +5,144 @@ import { WorldMap } from './components/WorldMap';
 import { TrackList } from './components/TrackList';
 import { GenerateButton } from './components/GenerateButton';
 
+const STORAGE_KEYS = {
+  TRACKS: 'mkw-selected-tracks',
+  COMPLETED: 'mkw-completed-orders',
+  MARKER_SIZE: 'mkw-marker-size',
+};
+
 function App() {
   const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([]);
   const [highlightedTrackId, setHighlightedTrackId] = useState<number | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
+  const [completedOrders, setCompletedOrders] = useState<Set<number>>(new Set()); // track completion by order number
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load selection from URL on mount
+  // Load state from localStorage or URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('s');
-    if (encoded) {
-      const decoded = decodeSelection(encoded, TRACKS);
-      if (decoded) {
-        setSelectedTracks(decoded);
+    const urlEncoded = params.get('s');
+    const savedTracks = localStorage.getItem(STORAGE_KEYS.TRACKS);
+    const savedCompleted = localStorage.getItem(STORAGE_KEYS.COMPLETED);
+    const savedSize = localStorage.getItem(STORAGE_KEYS.MARKER_SIZE);
+
+    // Determine if this is a shared link (URL differs from localStorage)
+    const isSharedLink = urlEncoded && urlEncoded !== savedTracks;
+
+    try {
+      // Load marker size from localStorage (always)
+      if (savedSize) {
+        setMarkerSize(Number(savedSize));
       }
+
+      if (isSharedLink) {
+        // This is a shared link - use URL and start fresh
+        const decoded = decodeSelection(urlEncoded, TRACKS);
+        if (decoded) {
+          setSelectedTracks(decoded);
+          setCompletedOrders(new Set());
+        }
+      } else {
+        // Same session or no URL - restore from localStorage
+        if (savedTracks) {
+          const decoded = decodeSelection(savedTracks, TRACKS);
+          if (decoded) {
+            setSelectedTracks(decoded);
+          }
+        }
+
+        if (savedCompleted) {
+          const completedArray = JSON.parse(savedCompleted) as number[];
+          setCompletedOrders(new Set(completedArray));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load state:', err);
     }
+
+    setIsLoaded(true);
   }, []);
 
-  // Update URL when selection changes
+  // Save selectedTracks to localStorage when it changes
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (selectedTracks.length > 0) {
       const encoded = encodeSelection(selectedTracks);
+      localStorage.setItem(STORAGE_KEYS.TRACKS, encoded);
+      // Also update URL for sharing
       const newUrl = `${window.location.pathname}?s=${encoded}`;
       window.history.replaceState(null, '', newUrl);
     } else {
+      localStorage.removeItem(STORAGE_KEYS.TRACKS);
       window.history.replaceState(null, '', window.location.pathname);
     }
-  }, [selectedTracks]);
+  }, [selectedTracks, isLoaded]);
+
+  // Save completedOrders to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (completedOrders.size > 0) {
+      localStorage.setItem(STORAGE_KEYS.COMPLETED, JSON.stringify([...completedOrders]));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.COMPLETED);
+    }
+  }, [completedOrders, isLoaded]);
+
+  // Save markerSize to localStorage when it changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize));
+  }, [markerSize, isLoaded]);
 
   const handleGenerate = useCallback(() => {
+    // Show confirmation if there's progress
+    if (completedOrders.size > 0) {
+      const confirmed = window.confirm(
+        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to generate a new selection? Your progress will be lost.`
+      );
+      if (!confirmed) return;
+    }
+
     const selected = selectRandomTracks(TRACKS, 16);
     setSelectedTracks(selected);
-  }, []);
+    setCompletedOrders(new Set());
+  }, [completedOrders.size, selectedTracks.length]);
 
   const handleReset = useCallback(() => {
+    // Show confirmation if there's progress
+    if (completedOrders.size > 0) {
+      const confirmed = window.confirm(
+        `You have completed ${completedOrders.size} of ${selectedTracks.length} tracks.\n\nAre you sure you want to reset? Your progress will be lost.`
+      );
+      if (!confirmed) return;
+    }
+
     setSelectedTracks([]);
+    setCompletedOrders(new Set());
+  }, [completedOrders.size, selectedTracks.length]);
+
+  // Toggle track completion status
+  const handleToggleComplete = useCallback((order: number) => {
+    setCompletedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(order)) {
+        next.delete(order);
+      } else {
+        next.add(order);
+      }
+      return next;
+    });
   }, []);
+
+  // Find the next uncompleted track (lowest order not in completedOrders)
+  const nextTrackOrder = selectedTracks.length > 0
+    ? Math.min(...selectedTracks
+        .map(t => t.order)
+        .filter(order => !completedOrders.has(order))) || null
+    : null;
 
   const handleCopyList = useCallback(async () => {
     const text = formatTrackListForClipboard(selectedTracks);
@@ -85,6 +186,9 @@ function App() {
               selectedTracks={selectedTracks}
               highlightedTrackId={highlightedTrackId}
               markerSize={markerSize}
+              completedOrders={completedOrders}
+              nextTrackOrder={nextTrackOrder}
+              onToggleComplete={handleToggleComplete}
             />
             {/* Marker size slider */}
             <div className="mt-3 flex items-center gap-3 px-1">
@@ -108,6 +212,9 @@ function App() {
                 selectedTracks={selectedTracks}
                 onTrackHover={setHighlightedTrackId}
                 onCopyList={handleCopyList}
+                completedOrders={completedOrders}
+                nextTrackOrder={nextTrackOrder}
+                onToggleComplete={handleToggleComplete}
               />
             </div>
           </div>
