@@ -6,9 +6,12 @@ interface WorldMapProps {
   selectedTracks: SelectedTrack[];
   highlightedTrackId: number | null;
   markerSize: number;
+  completedOrders: Set<number>;
+  nextTrackOrder: number | null;
+  onToggleComplete: (order: number) => void;
 }
 
-export function WorldMap({ selectedTracks, highlightedTrackId, markerSize }: WorldMapProps) {
+export function WorldMap({ selectedTracks, highlightedTrackId, markerSize, completedOrders, nextTrackOrder, onToggleComplete }: WorldMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -57,7 +60,7 @@ export function WorldMap({ selectedTracks, highlightedTrackId, markerSize }: Wor
           className="absolute inset-0"
           style={{ width: dimensions.width, height: dimensions.height }}
         >
-          {TRACKS.map((track, index) => {
+          {TRACKS.map((track) => {
             const selectedTrack = selectedMap.get(track.id);
             return (
               <TrackMarker
@@ -69,6 +72,9 @@ export function WorldMap({ selectedTracks, highlightedTrackId, markerSize }: Wor
                 isHighlighted={highlightedTrackId === track.id}
                 animationDelay={selectedTrack ? selectedTrack.order * 50 : 0}
                 sizeScale={markerSize / 100}
+                isCompleted={selectedTrack ? completedOrders.has(selectedTrack.order) : false}
+                isNext={selectedTrack?.order === nextTrackOrder}
+                onToggleComplete={selectedTrack ? () => onToggleComplete(selectedTrack.order) : undefined}
               />
             );
           })}

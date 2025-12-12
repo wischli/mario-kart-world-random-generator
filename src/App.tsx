@@ -10,6 +10,7 @@ function App() {
   const [highlightedTrackId, setHighlightedTrackId] = useState<number | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
+  const [completedOrders, setCompletedOrders] = useState<Set<number>>(new Set()); // track completion by order number
 
   // Load selection from URL on mount
   useEffect(() => {
@@ -41,7 +42,28 @@ function App() {
 
   const handleReset = useCallback(() => {
     setSelectedTracks([]);
+    setCompletedOrders(new Set());
   }, []);
+
+  // Toggle track completion status
+  const handleToggleComplete = useCallback((order: number) => {
+    setCompletedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(order)) {
+        next.delete(order);
+      } else {
+        next.add(order);
+      }
+      return next;
+    });
+  }, []);
+
+  // Find the next uncompleted track (lowest order not in completedOrders)
+  const nextTrackOrder = selectedTracks.length > 0
+    ? Math.min(...selectedTracks
+        .map(t => t.order)
+        .filter(order => !completedOrders.has(order))) || null
+    : null;
 
   const handleCopyList = useCallback(async () => {
     const text = formatTrackListForClipboard(selectedTracks);
@@ -85,6 +107,9 @@ function App() {
               selectedTracks={selectedTracks}
               highlightedTrackId={highlightedTrackId}
               markerSize={markerSize}
+              completedOrders={completedOrders}
+              nextTrackOrder={nextTrackOrder}
+              onToggleComplete={handleToggleComplete}
             />
             {/* Marker size slider */}
             <div className="mt-3 flex items-center gap-3 px-1">
@@ -108,6 +133,9 @@ function App() {
                 selectedTracks={selectedTracks}
                 onTrackHover={setHighlightedTrackId}
                 onCopyList={handleCopyList}
+                completedOrders={completedOrders}
+                nextTrackOrder={nextTrackOrder}
+                onToggleComplete={handleToggleComplete}
               />
             </div>
           </div>
