@@ -39,7 +39,8 @@ export function encodeSelection(selectedTracks: SelectedTrack[]): string {
 export function decodeSelection(encoded: string, allTracks: Track[]): SelectedTrack[] | null {
   try {
     const ids = atob(encoded).split(',').map(Number);
-    if (ids.length !== 16 || ids.some(isNaN)) return null;
+    // Accept any valid count from 1 to total tracks
+    if (ids.length < 1 || ids.length > allTracks.length || ids.some(isNaN)) return null;
 
     const trackMap = new Map(allTracks.map(t => [t.id, t]));
     const selected: SelectedTrack[] = [];
