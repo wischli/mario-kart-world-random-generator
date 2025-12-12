@@ -9,7 +9,13 @@ interface TrackMarkerProps {
   mapHeight: number;
   isHighlighted?: boolean;
   animationDelay?: number;
+  sizeScale?: number;
 }
+
+// Base sizes at 100%
+const BASE_SELECTED_SIZE = 36;
+const BASE_UNSELECTED_SIZE = 16;
+const BASE_SELECTED_FONT = 14;
 
 export function TrackMarker({
   track,
@@ -18,6 +24,7 @@ export function TrackMarker({
   mapHeight,
   isHighlighted,
   animationDelay = 0,
+  sizeScale = 1,
 }: TrackMarkerProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -25,6 +32,12 @@ export function TrackMarker({
   const top = (track.y / MAP_REF_HEIGHT) * mapHeight;
 
   const isSelected = !!selectedTrack;
+
+  // Calculate scaled sizes
+  const selectedSize = Math.round(BASE_SELECTED_SIZE * sizeScale);
+  const unselectedSize = Math.round(BASE_UNSELECTED_SIZE * sizeScale);
+  const fontSize = Math.round(BASE_SELECTED_FONT * sizeScale);
+  const borderWidth = Math.max(2, Math.round(3 * sizeScale));
 
   // Handle tap on mobile - toggle tooltip
   const handleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -45,21 +58,21 @@ export function TrackMarker({
       onMouseLeave={() => setShowTooltip(false)}
       onClick={handleTap}
     >
-      {/* Marker with larger touch target on mobile */}
+      {/* Marker with dynamic sizing */}
       <div
         className={`
           flex items-center justify-center rounded-full font-bold transition-all duration-200
           ${isSelected
-            ? `bg-yellow-400 text-black shadow-lg shadow-yellow-400/50 marker-pop-in marker-mobile-selected ${isHighlighted ? 'marker-pulse' : ''}`
-            : 'bg-gray-500/50 hover:bg-gray-400/70 marker-mobile-unselected'
+            ? `bg-yellow-400 text-black shadow-lg shadow-yellow-400/50 marker-pop-in ${isHighlighted ? 'marker-pulse' : ''}`
+            : 'bg-gray-500/50 hover:bg-gray-400/70'
           }
         `}
         style={{
-          width: isSelected ? '36px' : '16px',
-          height: isSelected ? '36px' : '16px',
-          fontSize: isSelected ? '14px' : '10px',
+          width: `${isSelected ? selectedSize : unselectedSize}px`,
+          height: `${isSelected ? selectedSize : unselectedSize}px`,
+          fontSize: `${isSelected ? fontSize : 10}px`,
           animationDelay: isSelected ? `${animationDelay}ms` : '0ms',
-          border: isSelected ? '3px solid #fff' : '2px solid rgba(255,255,255,0.3)',
+          border: isSelected ? `${borderWidth}px solid #fff` : '2px solid rgba(255,255,255,0.3)',
         }}
       >
         {isSelected && selectedTrack?.order}

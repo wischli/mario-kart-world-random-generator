@@ -9,6 +9,7 @@ function App() {
   const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([]);
   const [highlightedTrackId, setHighlightedTrackId] = useState<number | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [markerSize, setMarkerSize] = useState(70); // percentage: 50-100
 
   // Load selection from URL on mount
   useEffect(() => {
@@ -83,7 +84,21 @@ function App() {
             <WorldMap
               selectedTracks={selectedTracks}
               highlightedTrackId={highlightedTrackId}
+              markerSize={markerSize}
             />
+            {/* Marker size slider */}
+            <div className="mt-3 flex items-center gap-3 px-1">
+              <span className="text-xs text-gray-400 flex-shrink-0">Size</span>
+              <input
+                type="range"
+                min="40"
+                max="100"
+                value={markerSize}
+                onChange={(e) => setMarkerSize(Number(e.target.value))}
+                className="flex-1 h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-yellow-400"
+              />
+              <span className="text-xs text-gray-400 w-8 text-right">{markerSize}%</span>
+            </div>
           </div>
 
           {/* Track list sidebar */}

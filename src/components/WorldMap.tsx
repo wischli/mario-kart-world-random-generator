@@ -5,9 +5,10 @@ import { TrackMarker } from './TrackMarker';
 interface WorldMapProps {
   selectedTracks: SelectedTrack[];
   highlightedTrackId: number | null;
+  markerSize: number;
 }
 
-export function WorldMap({ selectedTracks, highlightedTrackId }: WorldMapProps) {
+export function WorldMap({ selectedTracks, highlightedTrackId, markerSize }: WorldMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -67,6 +68,7 @@ export function WorldMap({ selectedTracks, highlightedTrackId }: WorldMapProps) 
                 mapHeight={dimensions.height}
                 isHighlighted={highlightedTrackId === track.id}
                 animationDelay={selectedTrack ? selectedTrack.order * 50 : 0}
+                sizeScale={markerSize / 100}
               />
             );
           })}
