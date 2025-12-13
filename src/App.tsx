@@ -5,6 +5,7 @@ import { WorldMap } from './components/WorldMap';
 import { TrackList } from './components/TrackList';
 import { GenerateButton } from './components/GenerateButton';
 import { ConfirmModal } from './components/ConfirmModal';
+import { HelpModal } from './components/HelpModal';
 
 const STORAGE_KEYS = {
   TRACKS: 'mkw-selected-tracks',
@@ -29,6 +30,7 @@ function App() {
   }>({ isOpen: false, action: null });
   const [theme, setTheme] = useState<Theme>('system');
   const [trackCount, setTrackCount] = useState(16);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Load state from localStorage or URL on mount
   useEffect(() => {
@@ -229,6 +231,14 @@ function App() {
               </h1>
               <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Random Track Generator</p>
             </div>
+            <button
+              onClick={() => setShowHelp(true)}
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-blue-400 hover:bg-blue-300 text-black font-black text-sm border-2 border-black transition-transform active:translate-x-0.5 active:translate-y-0.5 flex-shrink-0"
+              style={{ boxShadow: '2px 2px 0px 0px #000' }}
+              title="Help"
+            >
+              ?
+            </button>
           </div>
           <GenerateButton
             onGenerate={handleGenerate}
@@ -318,6 +328,12 @@ function App() {
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
         variant="warning"
+      />
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
       />
     </div>
   );
